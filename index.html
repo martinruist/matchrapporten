@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+<title>Matchstatistik</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E1512;
+    --bg-grad-top:#16241A;
+    --bg-elev:#161F1A;
+    --bg-elev-2:#1D2820;
+    --line:#2A3A31;
+    --turf:#3FA34D;
+    --turf-deep:#2C7A3A;
+    --turf-glow: rgba(63,163,77,0.25);
+    --chalk:#F4F6F2;
+    --dim:#93A79A;
+    --gold:#E8B94B;
+    --red:#D8544A;
+    --opp:#7C8BA8;
+    --opp-deep:#5A6785;
+    --toast-bg:#F4F6F2;
+    --toast-text:#0E1512;
+    --spinner-track: rgba(244,246,242,0.25);
+    --radius-card:20px;
+    --radius-btn:12px;
+    --radius-chip:999px;
+  }
+  :root[data-theme="light"]{
+    --bg:#F3F6F0;
+    --bg-grad-top:#FFFFFF;
+    --bg-elev:#FFFFFF;
+    --bg-elev-2:#EEF3EA;
+    --line:#DBE4D7;
+    --turf:#2C9A44;
+    --turf-deep:#1F7A34;
+    --turf-glow: rgba(44,154,68,0.16);
+    --chalk:#152018;
+    --dim:#5C6C61;
+    --gold:#B8790E;
+    --red:#C0392B;
+    --opp:#46536B;
+    --opp-deep:#333E52;
+    --toast-bg:#152018;
+    --toast-text:#F4F6F2;
+    --spinner-track: rgba(21,32,24,0.15);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(ellipse 120% 80% at 50% -10%, var(--bg-grad-top) 0%, var(--bg) 55%);
+    color:var(--chalk);
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    transition: background .2s ease, color .2s ease;
+  }
+  .theme-btn{background:var(--bg-elev-2); border:1px solid var(--line); color:var(--chalk); width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; cursor:pointer; flex-shrink:0;}
+  .theme-btn:active{transform:scale(0.92);}
+  .topbar-right{display:flex; align-items:center; gap:8px;}
+  .score-num, .clock, .app-title{font-family:'Oswald',system-ui,sans-serif;}
+  #app{max-width:900px;margin:0 auto;padding:16px 16px 40px;}
+  button{font-family:inherit;}
+  .btn{
+    appearance:none; border:none; cursor:pointer;
+    background:var(--bg-elev-2); color:var(--chalk);
+    border:1px solid var(--line);
+    border-radius:var(--radius-btn);
+    padding:14px 16px;
+    font-size:15px; font-weight:600;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    transition: transform .08s ease, background .15s ease;
+    min-height:48px;
+  }
+  .btn:active{transform:scale(0.96);}
+  .btn:disabled{opacity:0.45; cursor:not-allowed; transform:none;}
+  .btn-primary{background:linear-gradient(180deg, var(--turf) 0%, var(--turf-deep) 100%); border-color:transparent; color:#08150B; font-weight:700;}
+  .btn-ghost{background:transparent; border:1px solid var(--line); color:var(--dim);}
+  .btn-danger{background:transparent; border:1px solid var(--red); color:var(--red);}
+  .btn-danger-solid{background:var(--red); border:1px solid var(--red); color:#fff; font-weight:700;}
+  .btn-danger-solid:active{transform:scale(0.96);}
+  .btn-block{width:100%;}
+  .btn-lg{padding:20px; font-size:17px;}
+
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; gap:10px;}
+  .back-link{background:none; border:none; color:var(--dim); font-size:15px; font-weight:600; cursor:pointer; padding:8px 4px; display:flex; align-items:center; gap:6px;}
+  .app-title{font-size:22px; font-weight:600; letter-spacing:0.3px; margin:0;}
+
+  .card{background:var(--bg-elev); border:1px solid var(--line); border-radius:var(--radius-card); padding:18px; margin-bottom:14px;}
+  .card-tap{cursor:pointer;}
+  .card-tap:active{transform:scale(0.985);}
+  .section-label{color:var(--dim); font-size:13px; font-weight:600; margin:0 0 10px 2px;}
+
+  .home-menu{display:flex; flex-direction:column; gap:12px; margin-top:8px;}
+  .home-item{display:flex; align-items:center; gap:14px; padding:20px; background:var(--bg-elev); border:1px solid var(--line); border-radius:var(--radius-card); cursor:pointer;}
+  .home-item:active{transform:scale(0.985);}
+  .home-item .ico{font-size:26px; width:44px; height:44px; display:flex; align-items:center; justify-content:center; background:var(--bg-elev-2); border-radius:12px; flex-shrink:0;}
+  .home-item .txt strong{display:block; font-size:16px;}
+  .home-item .txt span{color:var(--dim); font-size:13px;}
+
+  input[type=text], input[type=number], input[type=url]{
+    background:var(--bg-elev-2); border:1px solid var(--line); color:var(--chalk);
+    border-radius:var(--radius-btn); padding:13px 14px; font-size:15px; width:100%;
+    font-family:inherit;
+  }
+  input:focus{outline:2px solid var(--turf); outline-offset:1px;}
+  label.field-label{display:block; color:var(--dim); font-size:13px; font-weight:600; margin:0 0 6px 2px;}
+  .field{margin-bottom:16px;}
+  .row-2{display:grid; grid-template-columns:88px 1fr; gap:10px;}
+  .row-2-even{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+
+  /* Roster */
+  .player-row{display:flex; align-items:center; gap:12px; padding:10px 4px; border-bottom:1px solid var(--line);}
+  .player-row:last-child{border-bottom:none;}
+  .num-badge{width:38px; height:38px; border-radius:50%; background:var(--bg-elev-2); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0;}
+  .player-row .pname{flex:1; font-size:15px;}
+  .icon-btn{background:none; border:none; color:var(--dim); font-size:18px; cursor:pointer; padding:6px;}
+  .icon-btn.danger{color:var(--red);}
+  .edit-row{display:flex; align-items:center; gap:8px; padding:8px 4px; border-bottom:1px solid var(--line);}
+  .edit-row:last-child{border-bottom:none;}
+  .edit-row input[type=number]{width:66px; flex-shrink:0;}
+  .edit-row input[type=text]{flex:1;}
+
+  /* Setup */
+  .logo-preview{width:64px; height:64px; border-radius:14px; background:var(--bg-elev-2); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;}
+  .logo-preview img{width:100%; height:100%; object-fit:contain;}
+  .logo-row{display:flex; align-items:center; gap:12px; margin-bottom:12px;}
+  .spinner{width:18px; height:18px; border:2.5px solid var(--spinner-track); border-top-color:var(--chalk); border-radius:50%; animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .checkline{display:flex; align-items:center; gap:12px; padding:11px 4px; border-bottom:1px solid var(--line);}
+  .checkline:last-child{border-bottom:none;}
+  .checkline input{width:20px; height:20px; accent-color:var(--turf);}
+
+  /* Scoreboard */
+  .scoreboard{
+    background:radial-gradient(ellipse at 50% 0%, var(--turf-glow), transparent 70%), var(--bg-elev);
+    border:1px solid var(--line); border-radius:var(--radius-card);
+    padding:18px; margin-bottom:16px;
+  }
+  .clockrow{display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:12px;}
+  .clock{font-size:15px; color:var(--dim); letter-spacing:1px; font-weight:600;}
+  .clock.clock-over{color:var(--gold);}
+  .period-row{display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;}
+  .period-pill{background:var(--bg-elev-2); border:1px solid var(--line); border-radius:999px; padding:6px 14px; font-size:12.5px; font-weight:600; color:var(--dim);}
+  .period-pill strong{color:var(--chalk);}
+  .preset-row{display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;}
+  .preset-btn{background:var(--bg-elev-2); border:1px solid var(--line); color:var(--dim); border-radius:999px; padding:8px 14px; font-size:12.5px; font-weight:600; cursor:pointer;}
+  .preset-btn.active{border-color:var(--turf); color:var(--turf);}
+  .clock-btn{background:var(--bg-elev-2); border:1px solid var(--line); color:var(--chalk); width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px;}
+  .teams-row{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .team-side{flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; min-width:0;}
+  .team-badge{width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:16px; overflow:hidden; flex-shrink:0;}
+  .team-badge.us{background:linear-gradient(180deg, var(--turf), var(--turf-deep)); color:#08150B;}
+  .team-badge.opp{background:var(--bg-elev-2); border:1px solid var(--line);}
+  .team-badge img{width:100%; height:100%; object-fit:contain;}
+  .team-name{font-size:12.5px; color:var(--dim); font-weight:600; text-align:center; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .score-num{font-size:44px; font-weight:600; line-height:1;}
+  .score-mid{display:flex; align-items:center; gap:10px; padding:0 6px;}
+  .score-colon{font-size:30px; color:var(--dim); font-weight:600;}
+
+  /* Event grid */
+  .team-columns{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px;}
+  @media (max-width:480px){ .team-columns{gap:10px;} }
+  .team-col-head{font-size:13px; font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:6px;}
+  .team-col-head.us{color:var(--turf);}
+  .team-col-head.opp{color:var(--opp);}
+  .evt-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .evt-btn{padding:16px 6px; font-size:13.5px; flex-direction:column; gap:4px; min-height:64px; text-align:center;}
+  .evt-btn .e-ico{font-size:20px;}
+  .evt-btn.wide{grid-column:1 / -1;}
+
+  /* Event log */
+  .event-item{display:flex; align-items:center; gap:12px; padding:11px 4px; border-bottom:1px solid var(--line); cursor:pointer;}
+  .event-item:active{background:var(--bg-elev-2);}
+  .event-item:last-child{border-bottom:none;}
+  .event-item .e-time{color:var(--dim); font-size:12px; width:58px; flex-shrink:0; font-variant-numeric:tabular-nums;}
+  .event-item .e-ico2{font-size:17px; width:22px; flex-shrink:0; text-align:center;}
+  .event-item .e-desc{flex:1; font-size:14px;}
+  .event-item .e-desc .who{color:var(--dim); font-size:12.5px; display:block;}
+  .empty-hint{color:var(--dim); font-size:14px; text-align:center; padding:30px 10px;}
+
+  /* Modal */
+  .modal-backdrop{position:fixed; inset:0; background:rgba(6,10,8,0.72); backdrop-filter:blur(2px); display:flex; align-items:flex-end; justify-content:center; z-index:50;}
+  .modal-sheet{background:var(--bg-elev); border-radius:22px 22px 0 0; width:100%; max-width:900px; padding:18px 18px calc(20px + env(safe-area-inset-bottom)); max-height:85vh; overflow-y:auto; border-top:1px solid var(--line);}
+  .modal-title{font-size:17px; font-weight:700; margin:0 0 4px;}
+  .modal-sub{color:var(--dim); font-size:13px; margin:0 0 16px;}
+  .modal-close{position:absolute; top:14px; right:16px; background:var(--bg-elev-2); border:none; color:var(--dim); width:32px; height:32px; border-radius:50%; font-size:16px; cursor:pointer;}
+  .modal-sheet{position:relative;}
+  .num-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px;}
+  @media (min-width:520px){ .num-grid{grid-template-columns:repeat(5,1fr);} }
+  .num-chip{aspect-ratio:1; border-radius:16px; background:var(--bg-elev-2); border:1px solid var(--line); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; cursor:pointer; padding:4px;}
+  .num-chip:active{transform:scale(0.94); background:var(--turf-deep);}
+  .num-chip.selected{background:var(--turf-deep); border-color:var(--turf);}
+  .num-chip.selected .n, .num-chip.selected .nm{color:#EFFBF1;}
+  .num-chip .n{font-size:19px; font-weight:700;}
+  .num-chip .nm{font-size:9.5px; color:var(--dim); text-align:center; line-height:1.15; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px;}
+  .keypad button{background:var(--bg-elev-2); border:1px solid var(--line); color:var(--chalk); font-size:22px; font-weight:600; border-radius:14px; padding:18px 0; cursor:pointer;}
+  .keypad button:active{transform:scale(0.94);}
+  .keypad-display{text-align:center; font-size:38px; font-weight:700; font-family:'Oswald',sans-serif; margin-bottom:14px; min-height:46px; color:var(--gold);}
+  .sub-cols{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;}
+  .sub-col-title{font-size:12.5px; color:var(--dim); font-weight:700; margin-bottom:8px;}
+  .sub-list{display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto;}
+  .sub-pick{display:flex; align-items:center; gap:8px; padding:9px 10px; border-radius:10px; border:1px solid var(--line); background:var(--bg-elev-2); cursor:pointer; font-size:13.5px;}
+  .sub-pick.selected{border-color:var(--turf); background:rgba(63,163,77,0.18);}
+
+  .pitch-wrap{position:relative; border-radius:14px; overflow:hidden; border:1px solid var(--line);}
+  .pitch-marker{position:absolute; width:18px; height:18px; border-radius:50%; border:2.5px solid #fff; transform:translate(-50%,-50%); box-shadow:0 0 0 3px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.4); pointer-events:none;}
+
+  textarea{background:var(--bg-elev-2); border:1px solid var(--line); color:var(--chalk); border-radius:var(--radius-btn); padding:13px 14px; font-size:15px; width:100%; font-family:inherit; resize:vertical;}
+  textarea:focus{outline:2px solid var(--turf); outline-offset:1px;}
+  .report-text{font-size:14.5px; line-height:1.6; white-space:pre-wrap;}
+  .report-meta{color:var(--dim); font-size:12px; margin-top:10px;}
+
+  .toast{position:fixed; bottom:calc(24px + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); background:var(--toast-bg); color:var(--toast-text); padding:12px 20px; border-radius:999px; font-weight:600; font-size:14px; z-index:80; box-shadow:0 8px 24px rgba(0,0,0,0.35); opacity:0; pointer-events:none; transition:opacity .2s, transform .2s;}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
+
+  .hist-card{display:flex; align-items:center; gap:14px;}
+  .hist-badge{width:40px; height:40px; border-radius:10px; background:var(--bg-elev-2); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; font-size:15px; font-weight:700;}
+  .hist-badge img{width:100%; height:100%; object-fit:contain;}
+  .hist-info{flex:1; min-width:0;}
+  .hist-info .opp{font-size:15px; font-weight:600;}
+  .hist-info .date{color:var(--dim); font-size:12.5px;}
+  .hist-score{font-family:'Oswald',sans-serif; font-size:20px; font-weight:600; flex-shrink:0;}
+  .chev{color:var(--dim); font-size:18px; flex-shrink:0;}
+
+  .stat-table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  .stat-table th{text-align:center; color:var(--dim); font-size:11px; font-weight:700; padding:6px 4px; border-bottom:1px solid var(--line);}
+  .stat-table th:first-child, .stat-table td:first-child{text-align:left;}
+  .stat-table td{text-align:center; padding:8px 4px; border-bottom:1px solid var(--line);}
+  .stat-table tr:last-child td{border-bottom:none;}
+  .stat-table td.name{display:flex; align-items:center; gap:8px; text-align:left;}
+
+  .fab-note{color:var(--dim); font-size:12.5px; text-align:center; margin-top:10px;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+/* ---------- Storage helpers ----------
+   window.storage only exists when this app runs as a Claude.ai artifact.
+   When opened as a standalone file or hosted elsewhere, fall back to localStorage
+   so rosters and matches still persist. */
+function hasClaudeStorage(){ return typeof window.storage !== 'undefined' && window.storage !== null; }
+async function storeGet(key, fallback){
+  if(hasClaudeStorage()){
+    try{ const r = await window.storage.get(key, false); return r ? JSON.parse(r.value) : fallback; }
+    catch(e){ return fallback; }
+  }
+  try{ const raw = localStorage.getItem('matchstat_'+key); return raw!==null ? JSON.parse(raw) : fallback; }
+  catch(e){ return fallback; }
+}
+async function storeSet(key, value){
+  if(hasClaudeStorage()){
+    try{ const result = await window.storage.set(key, JSON.stringify(value), false); if(!result) console.error('storage set failed'); }
+    catch(e){ console.error('storage set failed', e); }
+    return;
+  }
+  try{ localStorage.setItem('matchstat_'+key, JSON.stringify(value)); }
+  catch(e){ console.error('localStorage set failed', e); }
+}
+async function storeDelete(key){
+  if(hasClaudeStorage()){
+    try{ await window.storage.delete(key, false); }catch(e){}
+    return;
+  }
+  try{ localStorage.removeItem('matchstat_'+key); }catch(e){}
+}
+
+/* ---------- App State ---------- */
+let roster = [];        // [{id, number, name}]
+let teamName = 'Mitt lag';
+let matchIndex = [];    // [{id,date,opponentName,opponentLogo,scoreUs,scoreOpp,finished}]
+let current = null;     // full live/open match object
+let screen = 'home';
+let setup = { opponentName:'', opponentLogo:'', lineup:new Set(), searching:false, logoError:false };
+let modal = null;
+let timer = { elapsed:0, running:false, intervalId:null };
+let viewMatch = null; // for history detail
+let theme = 'dark';
+let editingPlayerId = null;
+let reportGenerating = false;
+let statMapFilters = { goal:true, freekick:true, offside:true, card:true };
+let apiKey = '';
+
+const EVENT_META = {
+  goal:{icon:'⚽', label:'Mål'},
+  assist:{icon:'🎯', label:'Assist'},
+  corner:{icon:'🚩', label:'Hörna'},
+  freekick:{icon:'🦶', label:'Frispark'},
+  penalty:{icon:'⚪', label:'Straff'},
+  yellow:{icon:'🟨', label:'Gult kort'},
+  red:{icon:'🟥', label:'Rött kort'},
+  offside:{icon:'🚫', label:'Offside'},
+  sub:{icon:'🔄', label:'Byte'}
+};
+const LOCATION_TYPES = ['goal','freekick','yellow','red','offside'];
+/* Penalty box zones in the 0-100% coordinate system used for locations (SVG viewBox is 0 0 300 200) */
+const LEFT_BOX = { xMin:8/300*100, xMax:50/300*100, yMin:52/200*100, yMax:148/200*100 };
+const RIGHT_BOX = { xMin:250/300*100, xMax:292/300*100, yMin:52/200*100, yMax:148/200*100 };
+const PENALTY_MARGIN = 4; // % distance from the box line counted as "too close to call"
+function inBoxStatus(loc, box, margin){
+  const insideX = loc.x>=box.xMin && loc.x<=box.xMax;
+  const insideY = loc.y>=box.yMin && loc.y<=box.yMax;
+  if(insideX && insideY){
+    const distToEdge = Math.min(loc.x-box.xMin, box.xMax-loc.x, loc.y-box.yMin, box.yMax-loc.y);
+    return distToEdge<=margin ? 'near' : 'inside';
+  }
+  const dx = loc.x<box.xMin ? box.xMin-loc.x : (loc.x>box.xMax ? loc.x-box.xMax : 0);
+  const dy = loc.y<box.yMin ? box.yMin-loc.y : (loc.y>box.yMax ? loc.y-box.yMax : 0);
+  const dist = Math.sqrt(dx*dx+dy*dy);
+  return dist<=margin ? 'near' : 'outside';
+}
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function fmtClock(sec){ const m = Math.floor(sec/60).toString().padStart(2,'0'); const s = (sec%60).toString().padStart(2,'0'); return m+':'+s; }
+function fmtDate(iso){ const d = new Date(iso); return d.toLocaleDateString('sv-SE', {day:'numeric', month:'short', year:'numeric'}); }
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove('show'), 1600);
+}
+
+/* ---------- Init ---------- */
+async function init(){
+  roster = await storeGet('roster', []);
+  teamName = await storeGet('team-name', 'Mitt lag');
+  matchIndex = await storeGet('match-index', []);
+  theme = await storeGet('theme', 'dark');
+  apiKey = await storeGet('anthropic-api-key', '');
+  document.documentElement.setAttribute('data-theme', theme);
+  render();
+}
+async function updateApiKey(val){
+  apiKey = val.trim();
+  await storeSet('anthropic-api-key', apiKey);
+}
+
+async function toggleTheme(){
+  theme = theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+  await storeSet('theme', theme);
+  render();
+}
+
+/* ---------- Navigation ---------- */
+function goHome(){ screen='home'; modal=null; render(); }
+function goRoster(){ screen='roster'; render(); }
+function goHistory(){ screen='history'; render(); }
+function goSetup(){
+  setup = { opponentName:'', opponentLogo:'', lineup:new Set(roster.map(p=>p.id)), searching:false, logoError:false, periods:2, periodMinutes:45 };
+  screen='setup'; render();
+}
+function setPreset(periods, minutes){
+  setup.periods = periods; setup.periodMinutes = minutes;
+  render();
+}
+
+/* ---------- Roster management ---------- */
+async function addPlayer(){
+  const numEl = document.getElementById('new-num');
+  const nameEl = document.getElementById('new-name');
+  const num = numEl.value.trim();
+  const name = nameEl.value.trim();
+  if(!num || !name){ showToast('Fyll i nummer och namn'); return; }
+  roster.push({id:uid(), number:num, name});
+  roster.sort((a,b)=> (parseInt(a.number)||0) - (parseInt(b.number)||0));
+  await storeSet('roster', roster);
+  numEl.value=''; nameEl.value='';
+  render();
+}
+async function removePlayer(id){
+  roster = roster.filter(p=>p.id!==id);
+  await storeSet('roster', roster);
+  render();
+}
+function startEditPlayer(id){ editingPlayerId = id; render(); }
+function cancelEditPlayer(){ editingPlayerId = null; render(); }
+async function saveEditPlayer(id){
+  const numEl = document.getElementById('edit-num-'+id);
+  const nameEl = document.getElementById('edit-name-'+id);
+  const num = numEl.value.trim();
+  const name = nameEl.value.trim();
+  if(!num || !name){ showToast('Fyll i nummer och namn'); return; }
+  const p = roster.find(r=>r.id===id);
+  p.number = num; p.name = name;
+  roster.sort((a,b)=> (parseInt(a.number)||0) - (parseInt(b.number)||0));
+  await storeSet('roster', roster);
+  editingPlayerId = null;
+  render();
+}
+async function updateTeamName(val){
+  teamName = val || 'Mitt lag';
+  await storeSet('team-name', teamName);
+}
+
+/* ---------- Anthropic API helper ----------
+   Inside Claude.ai's artifact environment, requests to api.anthropic.com are
+   authenticated automatically. Standalone (downloaded file, GitHub Pages, etc.)
+   there is no built-in auth, so we use the user's own key from settings if set. */
+function anthropicHeaders(){
+  const headers = {'Content-Type':'application/json'};
+  if(apiKey){
+    headers['x-api-key'] = apiKey;
+    headers['anthropic-version'] = '2023-06-01';
+    headers['anthropic-dangerous-direct-browser-access'] = 'true';
+  }
+  return headers;
+}
+function aiUnavailableMessage(){
+  return hasClaudeStorage()
+    ? 'Kunde inte nå Claude just nu — försök igen.'
+    : 'Kunde inte nå Claude. Appen körs fristående — lägg in en Anthropic API-nyckel under Spelartrupp för att aktivera den här funktionen.';
+}
+
+/* ---------- Setup / logo search ---------- */
+function toggleLineup(id){
+  if(setup.lineup.has(id)) setup.lineup.delete(id); else setup.lineup.add(id);
+  render();
+}
+function toggleAllLineup(all){
+  setup.lineup = all ? new Set(roster.map(p=>p.id)) : new Set();
+  render();
+}
+async function searchLogo(){
+  const nameEl = document.getElementById('opp-name');
+  setup.opponentName = nameEl.value.trim();
+  if(!setup.opponentName){ showToast('Skriv in klubbens namn först'); return; }
+  setup.searching = true; setup.logoError=false; render();
+  try{
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers: anthropicHeaders(),
+      body: JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        messages:[{role:'user', content:
+          'Hitta en direkt bild-URL (slutar på .png, .svg, .jpg eller .webp) till fotbollsklubben "'+setup.opponentName+'"s officiella klubbmärke/logotyp. '+
+          'Föredra Wikipedia/Wikimedia Commons-länkar eftersom de går att länka direkt till. Svara ENDAST med kompakt JSON på formen '+
+          '{"logoUrl": "https://..."} utan någon inledande text, förklaring eller markdown-formatering. Om du inte hittar någon bild, svara {"logoUrl": null}.'
+        }],
+        tools:[{type:'web_search_20250305', name:'web_search'}]
+      })
+    });
+    if(!resp.ok){ throw new Error('HTTP '+resp.status); }
+    const data = await resp.json();
+    const textBlocks = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text);
+    let logoUrl = null;
+    for(const t of textBlocks){
+      const cleaned = t.replace(/```json|```/g,'').trim();
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if(match){
+        try{ const parsed = JSON.parse(match[0]); if(parsed.logoUrl){ logoUrl = parsed.logoUrl; break; } }catch(e){}
+      }
+    }
+    if(logoUrl){
+      setup.searching = true; render(); // keep spinner while we verify the image actually loads
+      const works = await testImageLoads(logoUrl);
+      if(works){
+        setup.opponentLogo = logoUrl; setup.logoError=false;
+        showToast('Emblem hittat');
+      } else {
+        showToast('Hittade en bildlänk men kunde inte ladda den — testa klistra in en annan URL manuellt');
+      }
+    } else {
+      showToast('Hittade ingen bild — klistra in en länk manuellt');
+    }
+  }catch(e){
+    console.error(e);
+    showToast(aiUnavailableMessage());
+  }
+  setup.searching = false; render();
+}
+function testImageLoads(url){
+  return new Promise(resolve=>{
+    const img = new Image();
+    img.referrerPolicy = 'no-referrer';
+    let done = false;
+    img.onload = ()=>{ if(!done){ done=true; resolve(true); } };
+    img.onerror = ()=>{ if(!done){ done=true; resolve(false); } };
+    img.src = url;
+    setTimeout(()=>{ if(!done){ done=true; resolve(false); } }, 6000);
+  });
+}
+function setManualLogo(val){ setup.opponentLogo = val.trim(); setup.logoError=false; render(); }
+
+async function startMatch(){
+  const nameEl = document.getElementById('opp-name');
+  const oppName = (nameEl ? nameEl.value.trim() : setup.opponentName);
+  if(!oppName){ showToast('Ange motståndarens klubbnamn'); return; }
+  const periodsEl = document.getElementById('setup-periods');
+  const minutesEl = document.getElementById('setup-period-minutes');
+  const periods = Math.max(1, parseInt((periodsEl?periodsEl.value:setup.periods)) || 2);
+  const periodMinutes = Math.max(1, parseInt((minutesEl?minutesEl.value:setup.periodMinutes)) || 45);
+  const match = {
+    id: uid(),
+    date: new Date().toISOString(),
+    opponentName: oppName,
+    opponentLogo: setup.opponentLogo || '',
+    lineupIds: Array.from(setup.lineup),
+    periods, periodMinutes, currentPeriod:1,
+    events: [],
+    finished:false
+  };
+  current = match;
+  timer = { elapsed:0, running:false, intervalId:null };
+  await storeSet('match-'+match.id, match);
+  screen='live'; render();
+}
+
+/* ---------- Live match ---------- */
+function toggleTimer(){
+  if(timer.running){
+    clearInterval(timer.intervalId); timer.running=false;
+  } else {
+    timer.running = true;
+    timer.intervalId = setInterval(()=>{ timer.elapsed++; updateClockDisplay(); }, 1000);
+  }
+  render();
+}
+function updateClockDisplay(){
+  const el = document.getElementById('live-clock');
+  if(!el) return;
+  el.textContent = fmtClock(timer.elapsed);
+  if(current){
+    const periodTargetSec = (current.periodMinutes||45) * 60;
+    el.classList.toggle('clock-over', timer.elapsed >= periodTargetSec);
+  }
+}
+async function endPeriod(){
+  const periods = current.periods || 2;
+  if((current.currentPeriod||1) >= periods) return;
+  if(timer.running){ clearInterval(timer.intervalId); timer.running=false; }
+  current.currentPeriod = (current.currentPeriod||1) + 1;
+  timer.elapsed = 0;
+  await storeSet('match-'+current.id, current);
+  showToast('⏹ Period avslutad — period '+current.currentPeriod+' påbörjad, klockan nollställd');
+  render();
+}
+function openPeriodModal(){
+  modal = { kind:'period', value: current.currentPeriod||1 };
+  render();
+}
+function adjustPeriodValue(delta){
+  const periods = current.periods || 2;
+  modal.value = Math.min(periods, Math.max(1, modal.value + delta));
+  render();
+}
+async function confirmPeriodChange(){
+  current.currentPeriod = modal.value;
+  await storeSet('match-'+current.id, current);
+  showToast('Period ändrad till '+current.currentPeriod);
+  modal = null; render();
+}
+function currentOnPitch(){
+  const set = new Set(current.lineupIds);
+  for(const e of current.events){
+    if(e.type==='sub'){ set.delete(e.outId); set.add(e.inId); }
+  }
+  return set;
+}
+function scoreOf(match, team){
+  return match.events.filter(e=>e.type==='goal' && e.team===team).length;
+}
+function openModal(kind, team, type){
+  modal = { kind, team, type, num:'' };
+  render();
+}
+function closeModal(){ modal=null; render(); }
+
+async function recordUsEvent(playerId){
+  const p = roster.find(r=>r.id===playerId);
+  if(!p) return;
+  const type = modal.type;
+  const base = { team:'us', type, playerId:p.id, number:p.number, name:p.name, t:timer.elapsed, seq:Date.now(), period:current.currentPeriod||1 };
+  if(LOCATION_TYPES.includes(type)){
+    modal = { kind:'pitchPick', pending: base, loc:null };
+    render();
+    return;
+  }
+  await finalizeUsEvent(base);
+}
+async function finalizeUsEvent(base, location){
+  const evt = { id:uid(), ...base };
+  if(location) evt.location = location;
+  current.events.push(evt);
+  if(base.type==='offside'){
+    addOppositeFreekick('us', base.t, base.period, location);
+    await storeSet('match-'+current.id, current);
+    showToast('🚫 Offside — '+teamName+' (frispark till motstånd)');
+    modal=null; render();
+    return;
+  }
+  await storeSet('match-'+current.id, current);
+  showToast(EVENT_META[base.type].icon+' '+EVENT_META[base.type].label+' — #'+base.number+' '+base.name);
+  if(base.type==='goal'){
+    modal = { kind:'assistPick', scorerId:base.playerId, selected:new Set() };
+    render();
+    return;
+  }
+  modal=null; render();
+}
+function toggleAssistSelect(id){
+  if(modal.selected.has(id)) modal.selected.delete(id); else modal.selected.add(id);
+  render();
+}
+function skipAssist(){ modal=null; render(); }
+async function confirmAssist(){
+  const ids = Array.from(modal.selected);
+  if(ids.length===0){ showToast('Markera minst en spelare, eller tryck Ingen assist'); return; }
+  ids.forEach(id=>{
+    const p = roster.find(r=>r.id===id);
+    if(p) current.events.push({ id:uid(), team:'us', type:'assist', playerId:p.id, number:p.number, name:p.name, t:timer.elapsed, seq:Date.now(), period:current.currentPeriod||1 });
+  });
+  await storeSet('match-'+current.id, current);
+  showToast('🎯 Assist sparad — '+ids.length+(ids.length===1?' spelare':' spelare'));
+  modal=null; render();
+}
+function keypadPress(d){
+  if(d==='back'){ modal.num = modal.num.slice(0,-1); }
+  else if(modal.num.length<3){ modal.num += d; }
+  render();
+}
+async function confirmOppEvent(){
+  if(!modal.num){ showToast('Ange tröjnummer'); return; }
+  const type = modal.type;
+  const base = { team:'opp', type, number:modal.num, t:timer.elapsed, seq:Date.now(), period:current.currentPeriod||1 };
+  if(LOCATION_TYPES.includes(type)){
+    modal = { kind:'pitchPick', pending: base, loc:null };
+    render();
+    return;
+  }
+  await finalizeOppEvent(base);
+}
+async function finalizeOppEvent(base, location){
+  const evt = { id:uid(), ...base };
+  if(location) evt.location = location;
+  current.events.push(evt);
+  if(base.type==='offside'){
+    addOppositeFreekick('opp', base.t, base.period, location);
+    await storeSet('match-'+current.id, current);
+    showToast('🚫 Offside — Motstånd (frispark till '+teamName+')');
+    modal=null; render();
+    return;
+  }
+  await storeSet('match-'+current.id, current);
+  showToast(EVENT_META[base.type].icon+' '+EVENT_META[base.type].label+' — Motstånd #'+base.number);
+  modal=null; render();
+}
+function addOppositeFreekick(offsideTeam, t, period, location){
+  const oppositeTeam = offsideTeam==='us' ? 'opp' : 'us';
+  const evt = { id:uid(), team:oppositeTeam, type:'freekick', t, seq:Date.now(), period, auto:true, autoReason:'offside' };
+  if(location) evt.location = location;
+  current.events.push(evt);
+}
+function openOffsideModal(team){
+  modal = { kind:'pitchPick', pending: { team, type:'offside', t:timer.elapsed, seq:Date.now(), period:current.currentPeriod||1 }, loc:null };
+  render();
+}
+/* ---------- Pitch location picker ---------- */
+function pitchTap(evt){
+  const svg = evt.currentTarget;
+  if(!svg) return;
+  const rect = svg.getBoundingClientRect();
+  const xPct = Math.max(0, Math.min(100, ((evt.clientX-rect.left)/rect.width)*100));
+  const yPct = Math.max(0, Math.min(100, ((evt.clientY-rect.top)/rect.height)*100));
+  modal.loc = { x: Math.round(xPct*10)/10, y: Math.round(yPct*10)/10 };
+  render();
+}
+async function confirmPitchLocation(){
+  if(!modal.loc){ showToast('Tryck på planen för att markera en plats'); return; }
+  const pending = modal.pending;
+  if(pending.type==='freekick'){
+    const box = pending.team==='us' ? RIGHT_BOX : LEFT_BOX;
+    const status = inBoxStatus(modal.loc, box, PENALTY_MARGIN);
+    if(status==='inside'){
+      pending.type = 'penalty';
+    } else if(status==='near'){
+      modal = { kind:'penaltyConfirm', pending, loc:modal.loc };
+      render();
+      return;
+    }
+  }
+  if(pending.team==='us') await finalizeUsEvent(pending, modal.loc);
+  else await finalizeOppEvent(pending, modal.loc);
+}
+async function resolvePenaltyConfirm(isPenalty){
+  const pending = modal.pending;
+  const loc = modal.loc;
+  pending.type = isPenalty ? 'penalty' : 'freekick';
+  if(pending.team==='us') await finalizeUsEvent(pending, loc);
+  else await finalizeOppEvent(pending, loc);
+}
+async function skipPitchLocation(){
+  const pending = modal.pending;
+  if(pending.team==='us') await finalizeUsEvent(pending);
+  else await finalizeOppEvent(pending);
+}
+function renderPitchSvg(interactive, handler){
+  const fn = handler || 'pitchTap';
+  const attrs = interactive ? ` onclick="${fn}(event)" style="width:100%; height:auto; display:block; cursor:crosshair;"` : ' style="width:100%; height:auto; display:block;"';
+  return `<svg viewBox="0 0 300 200"${attrs}>
+    <rect x="0" y="0" width="300" height="200" fill="#173420"/>
+    <rect x="0" y="0" width="150" height="200" fill="var(--turf)" fill-opacity="0.28"/>
+    <rect x="150" y="0" width="150" height="200" fill="var(--opp)" fill-opacity="0.28"/>
+    <g stroke="#F4F6F2" stroke-opacity="0.8" stroke-width="1.6" fill="none">
+      <rect x="8" y="8" width="284" height="184"/>
+      <line x1="150" y1="8" x2="150" y2="192"/>
+      <circle cx="150" cy="100" r="22"/>
+      <rect x="8" y="52" width="42" height="96"/>
+      <rect x="8" y="76" width="16" height="48"/>
+      <path d="M50,78 A22,22 0 0 1 50,122"/>
+      <rect x="250" y="52" width="42" height="96"/>
+      <rect x="276" y="76" width="16" height="48"/>
+      <path d="M250,78 A22,22 0 0 0 250,122"/>
+      <path d="M8,14 A6,6 0 0 1 14,8"/>
+      <path d="M8,186 A6,6 0 0 0 14,192"/>
+      <path d="M292,14 A6,6 0 0 0 286,8"/>
+      <path d="M292,186 A6,6 0 0 1 286,192"/>
+      <rect x="2" y="88" width="6" height="24"/>
+      <rect x="292" y="88" width="6" height="24"/>
+    </g>
+    <circle cx="150" cy="100" r="1.6" fill="#F4F6F2"/>
+    <circle cx="38" cy="100" r="1.6" fill="#F4F6F2"/>
+    <circle cx="262" cy="100" r="1.6" fill="#F4F6F2"/>
+    <text x="75" y="24" text-anchor="middle" fill="var(--turf)" font-size="12" font-weight="700" font-family="Inter, sans-serif" letter-spacing="0.5">VÅRT LAG</text>
+    <text x="225" y="24" text-anchor="middle" fill="var(--opp)" font-size="12" font-weight="700" font-family="Inter, sans-serif" letter-spacing="0.5">MOTSTÅND</text>
+  </svg>`;
+}
+function openSubModal(){ modal = { kind:'sub', outId:null, inId:null }; render(); }
+function pickSubOut(id){ modal.outId = id; render(); }
+function pickSubIn(id){ modal.inId = id; render(); }
+async function confirmSub(){
+  if(!modal.outId || !modal.inId){ showToast('Välj både ut och in'); return; }
+  const pOut = roster.find(r=>r.id===modal.outId);
+  const pIn = roster.find(r=>r.id===modal.inId);
+  const evt = { id:uid(), team:'us', type:'sub', outId:pOut.id, inId:pIn.id, outNumber:pOut.number, outName:pOut.name, inNumber:pIn.number, inName:pIn.name, t:timer.elapsed, seq:Date.now(), period:current.currentPeriod||1 };
+  current.events.push(evt);
+  await storeSet('match-'+current.id, current);
+  showToast('🔄 Byte — ut #'+pOut.number+' / in #'+pIn.number);
+  modal=null; render();
+}
+async function deleteEvent(evtId){
+  current.events = current.events.filter(e=>e.id!==evtId);
+  await storeSet('match-'+current.id, current);
+  render();
+}
+
+/* ---------- Notes ---------- */
+function openNoteModal(){
+  modal = { kind:'note' };
+  render();
+  setTimeout(()=>{ const el = document.getElementById('note-input'); if(el) el.focus(); }, 50);
+}
+async function confirmNote(){
+  const el = document.getElementById('note-input');
+  const text = el.value.trim();
+  if(!text){ showToast('Skriv något först'); return; }
+  if(!current.notes) current.notes = [];
+  current.notes.push({ id:uid(), text, t:timer.elapsed, seq:Date.now(), period:current.currentPeriod||1 });
+  await storeSet('match-'+current.id, current);
+  showToast('📝 Anteckning sparad');
+  modal = null; render();
+}
+async function deleteNote(noteId){
+  current.notes = (current.notes||[]).filter(n=>n.id!==noteId);
+  await storeSet('match-'+current.id, current);
+  render();
+}
+
+/* ---------- Event/note detail & edit modal ---------- */
+function openEventDetail(itemId, itemKind, context){
+  const match = context==='live' ? current : viewMatch;
+  if(!match) return;
+  const item = itemKind==='note' ? (match.notes||[]).find(n=>n.id===itemId) : match.events.find(e=>e.id===itemId);
+  if(!item) return;
+  modal = { kind:'eventDetail', item, itemKind, context };
+  render();
+}
+async function deleteEventDetail(){
+  const { item, itemKind, context } = modal;
+  const match = context==='live' ? current : viewMatch;
+  if(!match) return;
+  if(itemKind==='note'){
+    match.notes = (match.notes||[]).filter(n=>n.id!==item.id);
+  } else {
+    match.events = match.events.filter(e=>e.id!==item.id);
+  }
+  if(context!=='live'){
+    match.scoreUs = scoreOf(match,'us');
+    match.scoreOpp = scoreOf(match,'opp');
+    const idx = matchIndex.find(mi=>mi.id===match.id);
+    if(idx){ idx.scoreUs = match.scoreUs; idx.scoreOpp = match.scoreOpp; await storeSet('match-index', matchIndex); }
+  }
+  await storeSet('match-'+match.id, match);
+  showToast('🗑️ Borttagen');
+  modal = null; render();
+}
+function toggleEditMode(){
+  modal.editing = true;
+  modal.editOutId = modal.item.outId || null;
+  modal.editInId = modal.item.inId || null;
+  modal.editNum = modal.item.number || '';
+  render();
+}
+function cancelEditItem(){ modal.editing = false; render(); }
+async function saveEditedNote(){
+  const el = document.getElementById('edit-note-input');
+  const text = el.value.trim();
+  if(!text){ showToast('Skriv något'); return; }
+  const match = modal.context==='live' ? current : viewMatch;
+  const note = (match.notes||[]).find(n=>n.id===modal.item.id);
+  if(note){ note.text = text; await storeSet('match-'+match.id, match); }
+  showToast('💾 Anteckning uppdaterad');
+  modal = null; render();
+}
+async function saveEditedPlayer(newPlayerId){
+  const match = modal.context==='live' ? current : viewMatch;
+  const ev = match.events.find(e=>e.id===modal.item.id);
+  const p = roster.find(r=>r.id===newPlayerId);
+  if(!ev || !p) return;
+  ev.playerId = p.id; ev.number = p.number; ev.name = p.name;
+  await storeSet('match-'+match.id, match);
+  showToast('💾 Ändrat till #'+p.number+' '+p.name);
+  modal = null; render();
+}
+function editKeypadPress(d){
+  if(d==='back'){ modal.editNum = modal.editNum.slice(0,-1); }
+  else if(modal.editNum.length<3){ modal.editNum += d; }
+  render();
+}
+async function saveEditedNumber(){
+  if(!modal.editNum){ showToast('Ange nummer'); return; }
+  const match = modal.context==='live' ? current : viewMatch;
+  const ev = match.events.find(e=>e.id===modal.item.id);
+  if(!ev) return;
+  ev.number = modal.editNum;
+  await storeSet('match-'+match.id, match);
+  showToast('💾 Ändrat till #'+modal.editNum);
+  modal = null; render();
+}
+function editPickSubOut(id){ modal.editOutId = id; render(); }
+function editPickSubIn(id){ modal.editInId = id; render(); }
+async function saveEditedSub(){
+  if(!modal.editOutId || !modal.editInId){ showToast('Välj både ut och in'); return; }
+  const match = modal.context==='live' ? current : viewMatch;
+  const ev = match.events.find(e=>e.id===modal.item.id);
+  const pOut = roster.find(r=>r.id===modal.editOutId);
+  const pIn = roster.find(r=>r.id===modal.editInId);
+  if(!ev || !pOut || !pIn) return;
+  ev.outId=pOut.id; ev.outNumber=pOut.number; ev.outName=pOut.name;
+  ev.inId=pIn.id; ev.inNumber=pIn.number; ev.inName=pIn.name;
+  await storeSet('match-'+match.id, match);
+  showToast('💾 Byte uppdaterat');
+  modal = null; render();
+}
+function openEditLocation(){
+  modal = { kind:'editLocationPick', originalItem: modal.item, itemKind: modal.itemKind, context: modal.context, loc: modal.item.location || null };
+  render();
+}
+function backToEventDetailEdit(){
+  modal = { kind:'eventDetail', item: modal.originalItem, itemKind: modal.itemKind, context: modal.context, editing:true, editOutId: modal.originalItem.outId||null, editInId: modal.originalItem.inId||null, editNum: modal.originalItem.number||'' };
+  render();
+}
+function editLocationTap(evt){
+  const svg = evt.currentTarget;
+  if(!svg) return;
+  const rect = svg.getBoundingClientRect();
+  const xPct = Math.max(0, Math.min(100, ((evt.clientX-rect.left)/rect.width)*100));
+  const yPct = Math.max(0, Math.min(100, ((evt.clientY-rect.top)/rect.height)*100));
+  modal.loc = { x: Math.round(xPct*10)/10, y: Math.round(yPct*10)/10 };
+  render();
+}
+async function saveEditedLocation(){
+  if(!modal.loc){ showToast('Tryck på planen för att markera en plats'); return; }
+  const match = modal.context==='live' ? current : viewMatch;
+  const ev = match.events.find(e=>e.id===modal.originalItem.id);
+  if(!ev) return;
+  ev.location = modal.loc;
+  await storeSet('match-'+match.id, match);
+  showToast('💾 Plats uppdaterad');
+  modal = null; render();
+}
+
+/* ---------- Combined timeline (events + notes) ---------- */
+function buildTimeline(match){
+  const items = [
+    ...match.events.map((e,i)=>({...e, _kind:'event', _seq: e.seq!==undefined ? e.seq : i})),
+    ...(match.notes||[]).map((n,i)=>({...n, _kind:'note', _seq: n.seq!==undefined ? n.seq : i}))
+  ];
+  items.sort((a,b)=> a._seq - b._seq);
+  return items;
+}
+function renderTimelineRow(item, context, match){
+  if(item._kind==='note') return renderNoteRow(item, context, match);
+  return renderEventRow(item, context, match);
+}
+function periodTag(item, match){
+  const periods = match && match.periods ? match.periods : 1;
+  if(periods <= 1 || !item.period) return '';
+  return `P${item.period} · `;
+}
+function renderNoteRow(n, context, match){
+  return `<div class="event-item" onclick="openEventDetail('${n.id}','note','${context}')">
+    <div class="e-time">${periodTag(n,match)}${fmtClock(n.t||0)}</div>
+    <div class="e-ico2">📝</div>
+    <div class="e-desc">Anteckning<span class="who">${escapeHtml(n.text)}</span></div>
+    <div class="chev" style="font-size:15px;">›</div>
+  </div>`;
+}
+
+/* ---------- Match report ---------- */
+function timelineAsText(match){
+  const multiPeriod = (match.periods||1) > 1;
+  return buildTimeline(match).map(it=>{
+    const pTag = multiPeriod && it.period ? 'Period '+it.period+', ' : '';
+    const zTag = it.location ? ' ['+zoneLabel(it.location)+']' : '';
+    if(it._kind==='note') return pTag+fmtClock(it.t||0)+' – Anteckning: '+it.text;
+    const m = EVENT_META[it.type];
+    if(it.type==='sub') return pTag+fmtClock(it.t||0)+' – Byte ('+teamName+'): ut #'+it.outNumber+' '+it.outName+', in #'+it.inNumber+' '+it.inName;
+    if(it.type==='offside') return pTag+fmtClock(it.t||0)+' – Offside ('+(it.team==='us'?teamName:'Motstånd')+')'+zTag;
+    if(it.type==='freekick' && it.auto && it.autoReason==='offside') return pTag+fmtClock(it.t||0)+' – Frispark efter offside till '+(it.team==='us'?teamName:'Motstånd')+zTag;
+    if(it.team==='us') return pTag+fmtClock(it.t||0)+' – '+m.label+' ('+teamName+'): #'+it.number+' '+it.name+zTag;
+    return pTag+fmtClock(it.t||0)+' – '+m.label+' (Motstånd): #'+it.number+zTag;
+  }).join('\n');
+}
+async function generateReport(){
+  if(reportGenerating || !viewMatch) return;
+  const m = viewMatch;
+  reportGenerating = true; render();
+  try{
+    const timelineText = timelineAsText(m) || '(inga registrerade händelser)';
+    const prompt = 'Du är en lokaltidningsjournalist som skriver ett kort matchreferat på svenska om en fotbollsmatch på ungdoms-/breddnivå. '+
+      'Skriv engagerat men sakligt, i löpande text utan punktlistor eller rubrik.\n\n'+
+      'Lag: '+teamName+' mot '+m.opponentName+'\n'+
+      'Datum: '+fmtDate(m.date)+'\n'+
+      'Slutresultat: '+teamName+' '+m.scoreUs+' – '+m.scoreOpp+' '+m.opponentName+'\n'+
+      'Matchformat: '+(m.periods||2)+' perioder á '+(m.periodMinutes||45)+' minuter\n\n'+
+      'Händelselogg i kronologisk ordning (tid från matchstart), inklusive lagets egna anteckningar under matchen:\n'+timelineText+'\n\n'+
+      'Skriv ett sammanhängande referat på cirka 150–250 ord. Lyft fram mål, viktiga vändpunkter (kort, avgörande byten) och väv naturligt in eventuella anteckningar som om de vore observationer från sidlinjen. '+
+      'Svara ENDAST med själva referattexten – ingen rubrik, ingen inledande kommentar, ingen markdown-formatering.';
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers: anthropicHeaders(),
+      body: JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        messages:[{role:'user', content:prompt}]
+      })
+    });
+    if(!resp.ok){ throw new Error('HTTP '+resp.status); }
+    const data = await resp.json();
+    const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+    if(text){
+      m.report = text;
+      m.reportGeneratedAt = new Date().toISOString();
+      await storeSet('match-'+m.id, m);
+      showToast('🧾 Matchreferat klart');
+    } else {
+      showToast('Kunde inte generera referat — försök igen');
+    }
+  }catch(e){
+    console.error(e);
+    showToast(aiUnavailableMessage());
+  }
+  reportGenerating = false; render();
+}
+function endMatch(){
+  modal = { kind:'confirmEndMatch' };
+  render();
+}
+async function confirmEndMatchYes(){
+  modal = null;
+  if(timer.running){ clearInterval(timer.intervalId); timer.running=false; }
+  current.finished = true;
+  current.scoreUs = scoreOf(current,'us');
+  current.scoreOpp = scoreOf(current,'opp');
+  await storeSet('match-'+current.id, current);
+  matchIndex.unshift({ id:current.id, date:current.date, opponentName:current.opponentName, opponentLogo:current.opponentLogo, scoreUs:current.scoreUs, scoreOpp:current.scoreOpp, finished:true });
+  await storeSet('match-index', matchIndex);
+  const finished = current;
+  current = null;
+  statMapFilters = { goal:true, freekick:true, offside:true, card:true };
+  screen='detail'; viewMatch = finished; render();
+}
+function exitLiveConfirm(){
+  modal = { kind:'confirmExitLive' };
+  render();
+}
+function confirmExitLiveYes(){
+  modal = null;
+  if(timer.running){ clearInterval(timer.intervalId); timer.running=false; }
+  screen='home'; render();
+}
+
+/* ---------- History ---------- */
+async function openMatchDetail(id){
+  const m = await storeGet('match-'+id, null);
+  if(!m){ showToast('Kunde inte hitta matchen'); return; }
+  viewMatch = m; statMapFilters = { goal:true, freekick:true, offside:true, card:true };
+  screen='detail'; render();
+}
+function deleteMatch(id){
+  modal = { kind:'confirmDeleteMatch', matchId:id };
+  render();
+}
+async function confirmDeleteMatchYes(){
+  const id = modal.matchId;
+  modal = null;
+  matchIndex = matchIndex.filter(m=>m.id!==id);
+  await storeSet('match-index', matchIndex);
+  await storeDelete('match-'+id);
+  screen='history'; render();
+}
+async function resumeMatch(id){
+  const m = await storeGet('match-'+id, null);
+  if(!m) return;
+  current = m; timer = {elapsed:0, running:false, intervalId:null};
+  screen='live'; render();
+}
+
+/* ---------- Render ---------- */
+function render(){
+  const app = document.getElementById('app');
+  if(screen==='home') app.innerHTML = renderHome();
+  else if(screen==='roster') app.innerHTML = renderRoster();
+  else if(screen==='setup') app.innerHTML = renderSetup();
+  else if(screen==='live') app.innerHTML = renderLive();
+  else if(screen==='history') app.innerHTML = renderHistory();
+  else if(screen==='detail') app.innerHTML = renderDetail();
+  if(modal) app.innerHTML += renderModal();
+}
+
+function renderHome(){
+  const ongoing = current ? `<div class="card card-tap" onclick="screen='live';render();">
+      <div class="section-label">Pågående match</div>
+      <div style="font-weight:700;">vs ${escapeHtml(current.opponentName)} — fortsätt registrera</div>
+    </div>` : '';
+  return `
+    <div class="topbar"><h1 class="app-title">⚽ Matchstatistik</h1>${themeToggleBtn()}</div>
+    ${ongoing}
+    <div class="home-menu">
+      <div class="home-item" onclick="goSetup()">
+        <div class="ico">🏟️</div>
+        <div class="txt"><strong>Ny match</strong><span>Starta en ny match och registrera live</span></div>
+      </div>
+      <div class="home-item" onclick="goRoster()">
+        <div class="ico">📋</div>
+        <div class="txt"><strong>Spelartrupp</strong><span>${roster.length} spelare sparade</span></div>
+      </div>
+      <div class="home-item" onclick="goHistory()">
+        <div class="ico">📊</div>
+        <div class="txt"><strong>Matchhistorik</strong><span>${matchIndex.length} sparade matcher</span></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderRoster(){
+  const rows = roster.map(p => {
+    if(editingPlayerId === p.id){
+      return `
+      <div class="edit-row">
+        <input id="edit-num-${p.id}" type="number" value="${escapeAttr(p.number)}">
+        <input id="edit-name-${p.id}" type="text" value="${escapeAttr(p.name)}">
+        <button class="icon-btn" style="color:var(--turf);" onclick="saveEditPlayer('${p.id}')">✓</button>
+        <button class="icon-btn danger" onclick="cancelEditPlayer()">✕</button>
+      </div>`;
+    }
+    return `
+    <div class="player-row">
+      <div class="num-badge">${escapeHtml(p.number)}</div>
+      <div class="pname">${escapeHtml(p.name)}</div>
+      <button class="icon-btn" onclick="startEditPlayer('${p.id}')">✎</button>
+      <button class="icon-btn danger" onclick="removePlayer('${p.id}')">✕</button>
+    </div>`;
+  }).join('') || `<div class="empty-hint">Inga spelare tillagda än</div>`;
+  return `
+    <div class="topbar"><button class="back-link" onclick="goHome()">← Hem</button>${themeToggleBtn()}</div>
+    <h1 class="app-title" style="margin-bottom:16px;">Spelartrupp</h1>
+    <div class="card">
+      <label class="field-label">Lagnamn</label>
+      <input type="text" value="${escapeHtml(teamName)}" onchange="updateTeamName(this.value)">
+    </div>
+    <div class="card">
+      <div class="section-label">Lägg till spelare</div>
+      <div class="row-2" style="margin-bottom:10px;">
+        <input id="new-num" type="number" placeholder="Nr">
+        <input id="new-name" type="text" placeholder="Namn">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="addPlayer()">+ Lägg till</button>
+    </div>
+    <div class="card">
+      <div class="section-label">Spelare (${roster.length})</div>
+      ${rows}
+    </div>
+    <div class="card">
+      <div class="section-label">Anthropic API-nyckel <span style="font-weight:400; color:var(--dim); font-size:12px;">(valfritt)</span></div>
+      <p style="color:var(--dim); font-size:12.5px; line-height:1.5; margin:0 0 10px;">
+        Behövs bara om appen körs fristående (nedladdad fil, GitHub Pages e.dyl.) och du vill kunna söka klubbemblem och generera matchreferat. Öppnas appen direkt i Claude fungerar det utan nyckel. Nyckeln sparas bara lokalt i din webbläsare.
+      </p>
+      <input type="password" placeholder="sk-ant-..." value="${escapeAttr(apiKey)}" onchange="updateApiKey(this.value)">
+    </div>
+  `;
+}
+
+function renderSetup(){
+  const logoBox = setup.searching
+    ? `<div class="logo-preview"><div class="spinner"></div></div>`
+    : setup.opponentLogo
+      ? `<div class="logo-preview"><img src="${escapeAttr(setup.opponentLogo)}" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='🛡️'"></div>`
+      : `<div class="logo-preview">🛡️</div>`;
+  const lineupRows = roster.map(p => `
+    <div class="checkline">
+      <input type="checkbox" ${setup.lineup.has(p.id)?'checked':''} onchange="toggleLineup('${p.id}')">
+      <div class="num-badge" style="width:30px;height:30px;font-size:12px;">${escapeHtml(p.number)}</div>
+      <div style="flex:1;">${escapeHtml(p.name)}</div>
+    </div>`).join('') || `<div class="empty-hint">Lägg till spelare i truppen först</div>`;
+  return `
+    <div class="topbar"><button class="back-link" onclick="goHome()">← Hem</button>${themeToggleBtn()}</div>
+    <h1 class="app-title" style="margin-bottom:16px;">Ny match</h1>
+    <div class="card">
+      <div class="field">
+        <label class="field-label">Motståndarens klubb</label>
+        <input id="opp-name" type="text" placeholder="T.ex. IFK Göteborg" value="${escapeHtml(setup.opponentName)}">
+      </div>
+      <div class="logo-row">
+        ${logoBox}
+        <button class="btn btn-ghost" style="flex:1;" onclick="searchLogo()" ${setup.searching?'disabled':''}>
+          🔍 Sök emblem på nätet
+        </button>
+      </div>
+      <div class="field">
+        <label class="field-label">Eller klistra in bild-URL manuellt</label>
+        <input type="url" placeholder="https://..." value="${escapeAttr(setup.opponentLogo)}" onchange="setManualLogo(this.value)">
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-label">Matchformat</div>
+      <div class="preset-row">
+        <button class="preset-btn ${setup.periods===2&&setup.periodMinutes===45?'active':''}" onclick="setPreset(2,45)">2 x 45</button>
+        <button class="preset-btn ${setup.periods===2&&setup.periodMinutes===35?'active':''}" onclick="setPreset(2,35)">2 x 35</button>
+        <button class="preset-btn ${setup.periods===2&&setup.periodMinutes===25?'active':''}" onclick="setPreset(2,25)">2 x 25</button>
+        <button class="preset-btn ${setup.periods===4&&setup.periodMinutes===15?'active':''}" onclick="setPreset(4,15)">4 x 15</button>
+      </div>
+      <div class="row-2-even">
+        <div>
+          <label class="field-label">Antal perioder</label>
+          <input id="setup-periods" type="number" min="1" value="${setup.periods}" onchange="setup.periods=parseInt(this.value)||1; render();">
+        </div>
+        <div>
+          <label class="field-label">Minuter per period</label>
+          <input id="setup-period-minutes" type="number" min="1" value="${setup.periodMinutes}" onchange="setup.periodMinutes=parseInt(this.value)||1; render();">
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+        <div class="section-label" style="margin:0;">Startande spelare</div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-ghost" style="padding:8px 12px; font-size:12.5px;" onclick="toggleAllLineup(true)">Alla</button>
+          <button class="btn btn-ghost" style="padding:8px 12px; font-size:12.5px;" onclick="toggleAllLineup(false)">Ingen</button>
+        </div>
+      </div>
+      ${lineupRows}
+    </div>
+    <button class="btn btn-primary btn-block btn-lg" onclick="startMatch()">▶️ Starta match</button>
+  `;
+}
+
+function renderLive(){
+  const onPitchIds = currentOnPitch();
+  const scoreUs = scoreOf(current,'us');
+  const scoreOpp = scoreOf(current,'opp');
+  const oppBadge = current.opponentLogo
+    ? `<img src="${escapeAttr(current.opponentLogo)}" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.parentElement.textContent='🛡️';">`
+    : '🛡️';
+  const periods = current.periods || 2;
+  const periodMinutes = current.periodMinutes || 45;
+  const curPeriod = current.currentPeriod || 1;
+  const periodTargetSec = periodMinutes * 60;
+  const isOverTime = timer.elapsed >= periodTargetSec;
+  const timeline = [...buildTimeline(current)].reverse();
+  const eventRows = timeline.map(it => renderTimelineRow(it, 'live', current)).join('') || `<div class="empty-hint">Inga händelser registrerade än</div>`;
+
+  return `
+    <div class="topbar">
+      <button class="back-link" onclick="exitLiveConfirm()">← Hem</button>
+      <div class="topbar-right">
+        <div style="font-weight:600; color:var(--dim); font-size:14px;">vs ${escapeHtml(current.opponentName)}</div>
+        ${themeToggleBtn()}
+      </div>
+    </div>
+    <div class="scoreboard">
+      <div class="clockrow">
+        <button class="clock-btn" onclick="toggleTimer()">${timer.running?'⏸':'▶'}</button>
+        <div class="clock ${isOverTime?'clock-over':''}" id="live-clock">${fmtClock(timer.elapsed)}</div>
+      </div>
+      <div class="period-row">
+        <div class="period-pill">Period <strong>${curPeriod}</strong> av ${periods} · ${periodMinutes} min <button class="icon-btn" style="font-size:14px; padding:2px 0 2px 4px;" onclick="openPeriodModal()" title="Ändra period">✎</button></div>
+        ${curPeriod < periods ? `<button class="preset-btn" onclick="endPeriod()">⏹ Avsluta period</button>` : ''}
+      </div>
+      <div class="teams-row">
+        <div class="team-side">
+          <div class="team-badge us">${initials(teamName)}</div>
+          <div class="team-name">${escapeHtml(teamName)}</div>
+        </div>
+        <div class="score-mid">
+          <div class="score-num">${scoreUs}</div>
+          <div class="score-colon">:</div>
+          <div class="score-num">${scoreOpp}</div>
+        </div>
+        <div class="team-side">
+          <div class="team-badge opp">${oppBadge}</div>
+          <div class="team-name">${escapeHtml(current.opponentName)}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="team-columns">
+      <div>
+        <div class="team-col-head us">🟢 ${escapeHtml(teamName)}</div>
+        <div class="evt-grid">
+          ${evtButton('us','goal')}
+          ${evtButton('us','assist')}
+          ${evtButton('us','corner')}
+          ${evtButton('us','freekick')}
+          ${evtButton('us','yellow')}
+          ${evtButton('us','red')}
+          <button class="btn evt-btn wide" onclick="openOffsideModal('us')"><span class="e-ico">🚫</span>Offside</button>
+          <button class="btn evt-btn wide" onclick="openSubModal()"><span class="e-ico">🔄</span>Byte</button>
+        </div>
+      </div>
+      <div>
+        <div class="team-col-head opp">⚪ Motstånd</div>
+        <div class="evt-grid">
+          ${evtButton('opp','goal')}
+          ${evtButton('opp','assist')}
+          ${evtButton('opp','corner')}
+          ${evtButton('opp','freekick')}
+          ${evtButton('opp','yellow')}
+          ${evtButton('opp','red')}
+          <button class="btn evt-btn wide" onclick="openOffsideModal('opp')"><span class="e-ico">🚫</span>Offside</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-ghost btn-block" onclick="openNoteModal()" style="margin-bottom:14px;">📝 Lägg till anteckning</button>
+
+    <div class="card">
+      <div class="section-label">Händelser (senaste överst) <span style="font-weight:400; color:var(--dim); font-size:12px;">(tryck för detaljer)</span></div>
+      ${eventRows}
+    </div>
+
+    <button class="btn btn-danger btn-block btn-lg" onclick="endMatch()">⏹️ Avsluta match</button>
+  `;
+}
+function evtButton(team,type){
+  const m = EVENT_META[type];
+  const label = type==='freekick' ? 'Frispark/straff' : m.label;
+  return `<button class="btn evt-btn" onclick="openModal('event','${team}','${type}')"><span class="e-ico">${m.icon}</span>${label}</button>`;
+}
+function zoneLabel(loc){
+  if(!loc) return '';
+  return loc.x < 50 ? 'Vår planhalva' : 'Motståndarplan';
+}
+function renderEventRow(e, context, match){
+  const m = EVENT_META[e.type];
+  let desc, who='';
+  if(e.type==='sub'){
+    desc = 'Byte';
+    who = `Ut: #${escapeHtml(e.outNumber)} ${escapeHtml(e.outName)} · In: #${escapeHtml(e.inNumber)} ${escapeHtml(e.inName)}`;
+  } else if(e.type==='offside'){
+    desc = m.label;
+    who = e.team==='us' ? escapeHtml(teamName) : 'Motstånd';
+  } else if(e.type==='freekick' && e.auto && e.autoReason==='offside'){
+    desc = m.label + ' (efter offside)';
+    who = e.team==='us' ? 'Till '+escapeHtml(teamName) : 'Till motstånd';
+  } else if(e.team==='us'){
+    desc = m.label;
+    who = `#${escapeHtml(e.number)} ${escapeHtml(e.name)}`;
+  } else {
+    desc = m.label;
+    who = `Motstånd #${escapeHtml(e.number)}`;
+  }
+  if(e.location) who += ` · ${zoneLabel(e.location)}`;
+  return `<div class="event-item" onclick="openEventDetail('${e.id}','event','${context}')">
+    <div class="e-time">${periodTag(e,match)}${fmtClock(e.t||0)}</div>
+    <div class="e-ico2">${m.icon}</div>
+    <div class="e-desc">${desc}<span class="who">${who}</span></div>
+    <div class="chev" style="font-size:15px;">›</div>
+  </div>`;
+}
+
+function renderHistory(){
+  const rows = matchIndex.map(m => `
+    <div class="card hist-card card-tap" onclick="openMatchDetail('${m.id}')">
+      <div class="hist-badge">${m.opponentLogo ? `<img src="${escapeAttr(m.opponentLogo)}" referrerpolicy="no-referrer" onerror="this.parentElement.textContent='🛡️'">` : '🛡️'}</div>
+      <div class="hist-info">
+        <div class="opp">${escapeHtml(teamName)} vs ${escapeHtml(m.opponentName)}</div>
+        <div class="date">${fmtDate(m.date)}</div>
+      </div>
+      <div class="hist-score">${m.scoreUs} : ${m.scoreOpp}</div>
+      <div class="chev">›</div>
+    </div>`).join('') || `<div class="empty-hint">Inga sparade matcher än</div>`;
+  return `
+    <div class="topbar"><button class="back-link" onclick="goHome()">← Hem</button>${themeToggleBtn()}</div>
+    <h1 class="app-title" style="margin-bottom:16px;">Matchhistorik</h1>
+    ${rows}
+  `;
+}
+
+function renderDetail(){
+  const m = viewMatch;
+  const usStats = {};
+  roster.forEach(p=>{ usStats[p.id] = {number:p.number, name:p.name, goal:0, assist:0, corner:0, freekick:0, penalty:0, yellow:0, red:0, sub:0}; });
+  const oppStats = {};
+  m.events.forEach(e=>{
+    if(e.type==='sub'){
+      if(usStats[e.outId]) usStats[e.outId].sub++;
+      if(usStats[e.inId]) usStats[e.inId].sub++;
+      return;
+    }
+    if(e.type==='offside') return; // not attributed to a specific player/number
+    if(e.team==='us'){
+      if(!e.playerId) return; // auto-generated (e.g. free kick after opponent offside), no specific player
+      if(!usStats[e.playerId]) usStats[e.playerId] = {number:e.number, name:e.name, goal:0,assist:0,corner:0,freekick:0,penalty:0,yellow:0,red:0,sub:0};
+      usStats[e.playerId][e.type]++;
+    } else {
+      if(!e.number) return; // auto-generated, no specific opponent number
+      if(!oppStats[e.number]) oppStats[e.number] = {number:e.number, goal:0,corner:0,freekick:0,penalty:0,yellow:0,red:0,assist:0};
+      if(oppStats[e.number][e.type]!==undefined) oppStats[e.number][e.type]++;
+    }
+  });
+  const usRows = Object.values(usStats).filter(s=>s.goal+s.assist+s.corner+s.freekick+s.penalty+s.yellow+s.red+s.sub>0)
+    .sort((a,b)=> (parseInt(a.number)||0)-(parseInt(b.number)||0))
+    .map(s=>`<tr><td class="name"><div class="num-badge" style="width:26px;height:26px;font-size:11px;">${escapeHtml(s.number)}</div>${escapeHtml(s.name)}</td>
+      <td>${s.goal}</td><td>${s.assist}</td><td>${s.corner}</td><td>${s.freekick}</td><td>${s.penalty}</td><td>${s.yellow}</td><td>${s.red}</td><td>${s.sub}</td></tr>`).join('');
+  const oppRows = Object.values(oppStats).sort((a,b)=>(parseInt(a.number)||0)-(parseInt(b.number)||0))
+    .map(s=>`<tr><td class="name"><div class="num-badge" style="width:26px;height:26px;font-size:11px;">${escapeHtml(s.number)}</div>#${escapeHtml(s.number)}</td>
+      <td>${s.goal}</td><td>${s.corner}</td><td>${s.freekick}</td><td>${s.penalty}</td><td>${s.yellow}</td><td>${s.red}</td></tr>`).join('');
+  const timeline = [...buildTimeline(m)].reverse();
+  const eventRows = timeline.map(it=>renderTimelineRow(it,'detail',m)).join('') || `<div class="empty-hint">Inga händelser registrerade</div>`;
+  const offsideUs = m.events.filter(e=>e.type==='offside' && e.team==='us').length;
+  const offsideOpp = m.events.filter(e=>e.type==='offside' && e.team==='opp').length;
+
+  return `
+    <div class="topbar"><button class="back-link" onclick="goHistory()">← Historik</button>${themeToggleBtn()}</div>
+    <div class="scoreboard">
+      <div class="teams-row">
+        <div class="team-side">
+          <div class="team-badge us">${initials(teamName)}</div>
+          <div class="team-name">${escapeHtml(teamName)}</div>
+        </div>
+        <div class="score-mid">
+          <div class="score-num">${m.scoreUs}</div><div class="score-colon">:</div><div class="score-num">${m.scoreOpp}</div>
+        </div>
+        <div class="team-side">
+          <div class="team-badge opp">${m.opponentLogo?`<img src="${escapeAttr(m.opponentLogo)}" referrerpolicy="no-referrer" onerror="this.parentElement.textContent='🛡️'">`:'🛡️'}</div>
+          <div class="team-name">${escapeHtml(m.opponentName)}</div>
+        </div>
+      </div>
+      <div style="text-align:center; color:var(--dim); font-size:12.5px; margin-top:10px;">${fmtDate(m.date)} · ${m.periods||2} x ${m.periodMinutes||45} min${(offsideUs+offsideOpp)>0 ? ' · Offside '+offsideUs+'–'+offsideOpp : ''}</div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Händelsekarta</div>
+      <div class="preset-row" style="margin-bottom:12px;">
+        ${statFilterBtn('goal','Mål','#E8B94B')}
+        ${statFilterBtn('freekick','Frispark/Straff','#57B8FF')}
+        ${statFilterBtn('offside','Offside','#C77DFF')}
+        ${statFilterBtn('card','Kort','#F5D442')}
+      </div>
+      <div class="pitch-wrap">${renderStatsPitchSvg(m, statMapFilters)}</div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">${escapeHtml(teamName)} — statistik</div>
+      <table class="stat-table"><thead><tr><th>Spelare</th><th>⚽</th><th>🎯</th><th>🚩</th><th>🦶</th><th>⚪</th><th>🟨</th><th>🟥</th><th>🔄</th></tr></thead>
+      <tbody>${usRows || '<tr><td colspan="9" style="text-align:center;color:var(--dim);padding:14px;">Inga händelser</td></tr>'}</tbody></table>
+    </div>
+    <div class="card">
+      <div class="section-label">Motstånd — statistik</div>
+      <table class="stat-table"><thead><tr><th>Nr</th><th>⚽</th><th>🚩</th><th>🦶</th><th>⚪</th><th>🟨</th><th>🟥</th></tr></thead>
+      <tbody>${oppRows || '<tr><td colspan="7" style="text-align:center;color:var(--dim);padding:14px;">Inga händelser</td></tr>'}</tbody></table>
+    </div>
+    <div class="card">
+      <div class="section-label">Matchreferat</div>
+      ${m.report
+        ? `<div class="report-text">${escapeHtml(m.report)}</div><div class="report-meta">Genererat ${m.reportGeneratedAt ? fmtDate(m.reportGeneratedAt) : ''}</div>`
+        : `<div class="empty-hint">Inget referat genererat än</div>`}
+      <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="generateReport()" ${reportGenerating?'disabled':''}>
+        ${reportGenerating ? '⏳ Genererar referat...' : (m.report ? '🔄 Generera nytt referat' : '🧾 Generera matchreferat')}
+      </button>
+    </div>
+    <div class="card">
+      <div class="section-label">Händelselogg <span style="font-weight:400; color:var(--dim); font-size:12px;">(tryck för detaljer)</span></div>
+      ${eventRows}
+    </div>
+    <button class="btn btn-danger btn-block" onclick="deleteMatch('${m.id}')">🗑️ Radera match</button>
+  `;
+}
+function statFilterBtn(key,label,color){
+  const active = statMapFilters[key];
+  return `<button class="preset-btn" style="border-color:${active?color:'var(--line)'}; color:${active?color:'var(--dim)'};" onclick="toggleStatFilter('${key}')"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${color}; margin-right:6px; vertical-align:middle;"></span>${label}</button>`;
+}
+function toggleStatFilter(key){ statMapFilters[key] = !statMapFilters[key]; render(); }
+function renderStatsPitchSvg(match, filters){
+  const dots = [];
+  match.events.forEach(e=>{
+    if(!e.location) return;
+    let category=null, color=null;
+    if(e.type==='goal'){ category='goal'; color='#E8B94B'; }
+    else if(e.type==='freekick'){ category='freekick'; color='#57B8FF'; }
+    else if(e.type==='penalty'){ category='freekick'; color='#2E86DE'; }
+    else if(e.type==='offside'){ category='offside'; color='#C77DFF'; }
+    else if(e.type==='yellow'){ category='card'; color='#F5D442'; }
+    else if(e.type==='red'){ category='card'; color='#E5484D'; }
+    if(!category || !filters[category]) return;
+    const svgX = (e.location.x/100)*300;
+    const svgY = (e.location.y/100)*200;
+    dots.push(`<circle cx="${svgX.toFixed(1)}" cy="${svgY.toFixed(1)}" r="4.4" fill="${color}" stroke="#0E1512" stroke-width="1" fill-opacity="0.92"/>`);
+  });
+  return renderPitchSvg(false).replace('</svg>', dots.join('')+'</svg>');
+}
+
+function renderModal(){
+  if(modal.kind==='confirmEndMatch'){
+    return `<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="modal-sheet">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-title">⏹️ Avsluta match?</div>
+      <div class="modal-sub">Matchen mot ${escapeHtml(current.opponentName)} sparas till historiken.</div>
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="closeModal()">Avbryt</button>
+        <button class="btn btn-danger-solid" style="flex:1;" onclick="confirmEndMatchYes()">Avsluta match</button>
+      </div>
+    </div></div>`;
+  }
+  if(modal.kind==='confirmDeleteMatch'){
+    return `<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="modal-sheet">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-title">🗑️ Radera match?</div>
+      <div class="modal-sub">Matchen tas bort permanent och går inte att återställa.</div>
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="closeModal()">Avbryt</button>
+        <button class="btn btn-danger-solid" style="flex:1;" onclick="confirmDeleteMatchYes()">Radera</button>
+      </div>
+    </div></div>`;
+  }
+  if(modal.kind==='confirmExitLive'){
+    return `<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="modal-sheet">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-title">Lämna matchvyn?</div>
+      <div class="modal-sub">Matchen sparas som pågående och du kan fortsätta senare.</div>
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="closeModal()">Avbryt</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="confirmExitLiveYes()">Lämna</button>
+      </div>
+    </div></div>`;
+  }
+  if(modal.kind==='eventDetail'){
+    const item = modal.item;
+    const match = modal.context==='live' ? current : viewMatch;
+    const isNote = modal.itemKind==='note';
+    const m = isNote ? {icon:'📝', label:'Anteckning'} : EVENT_META[item.type];
+    let who = '';
+    if(isNote) who = escapeHtml(item.text);
+    else if(item.type==='sub') who = `Ut: #${escapeHtml(item.outNumber)} ${escapeHtml(item.outName)} · In: #${escapeHtml(item.inNumber)} ${escapeHtml(item.inName)}`;
+    else if(item.type==='offside') who = item.team==='us' ? escapeHtml(teamName) : 'Motstånd';
+    else if(item.type==='freekick' && item.auto && item.autoReason==='offside') who = item.team==='us' ? 'Till '+escapeHtml(teamName) : 'Till motstånd';
+    else if(item.team==='us') who = `#${escapeHtml(item.number)} ${escapeHtml(item.name)}`;
+    else who = `Motstånd #${escapeHtml(item.number)}`;
+    const periodTxt = (match && match.periods>1 && item.period) ? (' · Period '+item.period) : '';
+    const pitchSection = item.location ? `<div class="pitch-wrap" style="margin:14px 0;">${renderPitchSvg(false)}<div class="pitch-marker" style="left:${item.location.x}%; top:${item.location.y}%; background:${item.team==='us'?'var(--turf)':'var(--opp)'};"></div></div>` : '';
+
+    if(!modal.editing){
+      return `<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="modal-sheet">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <div class="modal-title">${m.icon} ${m.label}</div>
+        <div class="modal-sub">${fmtClock(item.t||0)}${periodTxt} · ${who}</div>
+        ${pitchSection}
+        <div style="display:flex; gap:10px; margin-top:16px;">
+          <button class="btn btn-ghost" style="flex:1;" onclick="toggleEditMode()">✏️ Redigera</button>
+          <button class="btn btn-danger-solid" style="flex:1;" onclick="deleteEventDetail()">🗑️ Ta bort</button>
+        </div>
+      </div></div>`;
+    }
+
+    // Edit mode
+    let editBody = '';
+    const canEditLocation = item.location || LOCATION_TYPES.includes(item.type);
+    const locBtn = canEditLocation ? `<button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="openEditLocation()">📍 Ändra plats</button>` : '';
+    if(isNote){
+      editBody = `<textarea id="edit-note-input" rows="4">${escapeHtml(item.text)}</textarea>
+        <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="saveEditedNote()">💾 Spara</button>`;
+    } else if(item.type==='sub'){
+      const outChips = roster.filter(p=>p.id!==modal.editInId).map(p=>`<div class="sub-pick ${modal.editOutId===p.id?'selected':''}" onclick="editPickSubOut('${p.id}')">#${escapeHtml(p.number)} ${escapeHtml(p.name)}</div>`).join('') || `<div class="empty-hint" style="padding:10px;">Ingen tillgänglig</div>`;
+      const inChips = roster.filter(p=>p.id!==modal.editOutId).map(p=>`<div class="sub-pick ${modal.editInId===p.id?'selected':''}" onclick="editPickSubIn('${p.id}')">#${escapeHtml(p.number)} ${escapeHtml(p.name)}</div>`).join('') || `<div class="empty-hint" style="padding:10px;">Ingen tillgänglig</div>`;
+      editBody = `<div class="sub-cols">
+        <div><div class="sub-col-title">UT</div><div class="sub-list">${outChips}</div></div>
+        <div><div class="sub-col-title">IN</div><div class="sub-list">${inChips}</div></div>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:10px;" onclick="saveEditedSub()">💾 Spara byte</button>`;
+    } else if(item.type==='offside' || (item.type==='freekick' && item.auto)){
+      editBody = `<p style="color:var(--dim); font-size:13px; margin:4px 0 4px;">Den här händelsen är kopplad till ett lag, inte en specifik spelare.</p>${locBtn}`;
+    } else if(item.team==='us'){
+      const chips = roster.map(p=>`<div class="num-chip ${p.id===item.playerId?'selected':''}" onclick="saveEditedPlayer('${p.id}')"><div class="n">${escapeHtml(p.number)}</div><div class="nm">${escapeHtml(p.name)}</div></div>`).join('') || `<div class="empty-hint">Inga spelare i truppen</div>`;
+      editBody = `<div class="modal-sub" style="margin-top:-4px;">Tryck för att byta spelare</div><div class="num-grid">${chips}</div>${locBtn}`;
+    } else {
+      editBody = `<div class="keypad-display">${modal.editNum || '—'}</div>
+        <div class="keypad">
+          ${[1,2,3,4,5,6,7,8,9].map(n=>`<button onclick="editKeypadPress('${n}')">${n}</button>`).join('')}
+          <button onclick="editKeypadPress('back')">⌫</button>
+          <button onclick="editKeypadPress('0')">0</button>
+          <button style="background:var(--turf);color:#08150B;" onclick="saveEditedNumber()">✓</button>
+        </div>${locBtn}`;
+    }
+    return `<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="modal-sheet">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-title">✏️ Redigera — ${m.icon} ${m.label}</div>
+      ${editBody}
+      <button class="btn btn-ghost btn-block" style="margin-top:14px;" onclick="cancelEditItem()">Avbryt</button>
+    </div></div>`;
+  }
+  if(modal.kind==='editLocationPick'){
+    const markerHtml = modal.loc ? `<div class="pitch-marker" style="left:${modal.loc.x}%; top:${modal.loc.y}%; background:${modal.originalItem.team==='us'?'var(--turf)':'var(--opp)'};"></div>` : '';
+    return `<div class="modal-backdrop" onclick="if(event.target===this)backToEventDetailEdit()"><div class="modal-sheet">
+      <button class="modal-close" onclick="backToEventDetailEdit()">✕</button>
+      <div class="modal-title">📍 Ändra plats</div>
+      <div class="modal-sub">Tryck på planen för att markera ny plats</div>
+      <div class="pitch-wrap">${renderPitchSvg(true,'editLocationTap')}${markerHtml}</div>
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="backToEventDetailEdit()">Avbryt</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="saveEditedLocation()" ${!modal.loc?'disabled':''}>💾 Spara plats</button>
+      </div>
+    </div></div>`;
+  }
+  if(modal.kind==='pitchPick'){
+    const p = modal.pending;
+    const who = p.team==='us' ? ('#'+escapeHtml(p.number)+' '+escapeHtml(p.name)) : ('Motstånd #'+escapeHtml(p.number));
+    const markerColor = p.team==='us' ? 'var(--turf)' : 'var(--opp)';
+    const markerHtml = modal.loc ? `<div class="pitch-marker" style="left:${modal.loc.x}%; top:${modal.loc.y}%; background:${markerColor};"></div>` : '';
+    const pLabel = p.type==='freekick' ? 'Frispark/straff' : EVENT_META[p.type].label;
+    return `<div class="modal-backdrop" onclick="if(event.target===this)skipPitchLocation()"><div class="modal-sheet">
+      <button class="modal-close" onclick="skipPitchLocation()">✕</button>
+      <div class="modal-title">${EVENT_META[p.type].icon} ${pLabel} — var på plan?</div>
+      <div class="modal-sub">Tryck på planen där det hände (${who})</div>
+      <div class="pitch-wrap">${renderPitchSvg(true)}${markerHtml}</div>
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="skipPitchLocation()">Hoppa över</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="confirmPitchLocation()" ${!modal.loc?'disabled':''}>Spara plats</button>
+      </div>
+    </div></div>`;
+  }
+  if(modal.kind==='penaltyConfirm'){
+    const p = modal.pending;
+    const who = p.team==='us' ? ('#'+escapeHtml(p.number)+' '+escapeHtml(p.name)) : ('Motstånd #'+escapeHtml(p.number));
+    return `<div class="modal-backdrop"><div class="modal-sheet">
+      <div class="modal-title">⚠️ Nära straffområdeslinjen</div>
+      <div class="modal-sub">Platsen ligger precis vid linjen för straffområdet. Var händelsen (${who}) en straff eller en vanlig frispark?</div>
+      <div class="pitch-wrap" style="margin-top:14px;">${renderPitchSvg(false)}<div class="pitch-marker" style="left:${modal.loc.x}%; top:${modal.loc.y}%; background:${p.team==='us'?'var(--turf)':'var(--opp)'};"></div></div>
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="resolvePenaltyConfirm(false)">🦶 Frispark</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="resolvePenaltyConfirm(true)">⚪ Straff</button>
+      </div>
+    </div></div>`;
+  }
+  if(modal.kind==='assistPick'){
+    const scorer = roster.find(r=>r.id===modal.scorerId);
+    const candidates = roster.filter(p=>p.id!==modal.scorerId);
+    const chips = candidates.map(p=>`<div class="num-chip ${modal.selected.has(p.id)?'selected':''}" onclick="toggleAssistSelect('${p.id}')"><div class="n">${escapeHtml(p.number)}</div><div class="nm">${escapeHtml(p.name)}</div></div>`).join('') || `<div class="empty-hint">Inga andra spelare i truppen</div>`;
+    return `<div class="modal-backdrop" onclick="if(event.target===this)skipAssist()"><div class="modal-sheet">
+      <button class="modal-close" onclick="skipAssist()">✕</button>
+      <div class="modal-title">🎯 Assist${scorer ? ' på mål av #'+escapeHtml(scorer.number)+' '+escapeHtml(scorer.name) : ''}</div>
+      <div class="modal-sub">Markera en eller flera spelare som gjort assist till målet</div>
+      <div class="num-grid">${chips}</div>
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="btn btn-ghost" style="flex:1;" onclick="skipAssist()">Ingen assist</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="confirmAssist()">Spara assist${modal.selected.size ? ' ('+modal.selected.size+')' : ''}</button>
+      </div>
+    </div></div>`;
+  }
+  if(modal.kind==='period'){
+    return `<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="modal-sheet">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-title">Ändra aktuell period</div>
+      <div class="modal-sub">Ändrar bara vilken period som visas — klockan påverkas inte</div>
+      <div style="display:flex; align-items:center; justify-content:center; gap:24px; margin:22px 0;">
+        <button class="clock-btn" style="width:44px; height:44px; font-size:20px;" onclick="adjustPeriodValue(-1)">−</button>
+        <div style="font-size:34px; font-weight:700; font-family:'Oswald',sans-serif; min-width:40px; text-align:center;">${modal.value}</div>
+        <button class="clock-btn" style="width:44px; height:44px; font-size:20px;" onclick="adjustPeriodValue(1)">+</button>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="confirmPeriodChange()">Spara</button>
+    </div></div>`;
+  }
+  if(modal.kind==='note'){
+    return `<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="modal-sheet">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-title">📝 Anteckning</div>
+      <div class="modal-sub">Skriv en snabb notering — taktik, skada, prestation eller annat värt att komma ihåg</div>
+      <textarea id="note-input" rows="4" placeholder="Skriv här..."></textarea>
+      <button class="btn btn-primary btn-block" style="margin-top:14px;" onclick="confirmNote()">Spara anteckning</button>
+    </div></div>`;
+  }
+  if(modal.kind==='event'){
+    const evLabel = modal.type==='freekick' ? 'Frispark/straff' : EVENT_META[modal.type].label;
+    if(modal.team==='us'){
+      const chips = roster.map(p=>`<div class="num-chip" onclick="recordUsEvent('${p.id}')"><div class="n">${escapeHtml(p.number)}</div><div class="nm">${escapeHtml(p.name)}</div></div>`).join('') || `<div class="empty-hint">Inga spelare i truppen</div>`;
+      return `<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="modal-sheet">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <div class="modal-title">${EVENT_META[modal.type].icon} ${evLabel}</div>
+        <div class="modal-sub">Välj vilken spelare i ${escapeHtml(teamName)}</div>
+        <div class="num-grid">${chips}</div>
+      </div></div>`;
+    } else {
+      return `<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="modal-sheet">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <div class="modal-title">${EVENT_META[modal.type].icon} ${evLabel} — Motstånd</div>
+        <div class="modal-sub">Ange tröjnummer</div>
+        <div class="keypad-display">${modal.num || '—'}</div>
+        <div class="keypad">
+          ${[1,2,3,4,5,6,7,8,9].map(n=>`<button onclick="keypadPress('${n}')">${n}</button>`).join('')}
+          <button onclick="keypadPress('back')">⌫</button>
+          <button onclick="keypadPress('0')">0</button>
+          <button style="background:var(--turf);color:#08150B;" onclick="confirmOppEvent()">✓</button>
+        </div>
+      </div></div>`;
+    }
+  }
+  if(modal.kind==='sub'){
+    const onPitchIds = currentOnPitch();
+    const onPitch = roster.filter(p=>onPitchIds.has(p.id));
+    const bench = roster.filter(p=>!onPitchIds.has(p.id));
+    const outList = onPitch.map(p=>`<div class="sub-pick ${modal.outId===p.id?'selected':''}" onclick="pickSubOut('${p.id}')">#${escapeHtml(p.number)} ${escapeHtml(p.name)}</div>`).join('') || `<div class="empty-hint" style="padding:10px;">Ingen på plan</div>`;
+    const inList = bench.map(p=>`<div class="sub-pick ${modal.inId===p.id?'selected':''}" onclick="pickSubIn('${p.id}')">#${escapeHtml(p.number)} ${escapeHtml(p.name)}</div>`).join('') || `<div class="empty-hint" style="padding:10px;">Ingen på bänken</div>`;
+    return `<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="modal-sheet">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-title">🔄 Byte</div>
+      <div class="modal-sub">Välj spelare ut och in</div>
+      <div class="sub-cols">
+        <div><div class="sub-col-title">UT</div><div class="sub-list">${outList}</div></div>
+        <div><div class="sub-col-title">IN</div><div class="sub-list">${inList}</div></div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="confirmSub()">Bekräfta byte</button>
+    </div></div>`;
+  }
+  return '';
+}
+
+/* ---------- Utils ---------- */
+function escapeHtml(s){ return (s===undefined||s===null) ? '' : String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s){ return escapeHtml(s); }
+function themeToggleBtn(){
+  return `<button class="theme-btn" onclick="toggleTheme()" title="Byt tema">${theme==='dark' ? '☀️' : '🌙'}</button>`;
+}
+function initials(name){
+  return (name||'').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase() || '?';
+}
+
+init();
+</script>
+</body>
+</html>

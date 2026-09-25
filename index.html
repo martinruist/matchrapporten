@@ -609,6 +609,95 @@ async function confirmPeriodChange(){
   showToast('Period ändrad till '+current.currentPeriod);
   modal = null; render();
 }
+
+/* ---------- Match settings (live view) ---------- */
+function openMatchSettings(){
+  modal = { kind:'matchSettings', tab:'match', searching:false };
+  render();
+}
+function setSettingsTab(tab){
+  modal.tab = tab;
+  render();
+}
+function setMatchPreset(periods, minutes){
+  current.periods = periods; current.periodMinutes = minutes;
+  if((current.currentPeriod||1) > periods) current.currentPeriod = periods;
+  storeSet('match-'+current.id, current);
+  render();
+}
+async function updateMatchPeriods(val){
+  const n = parseInt(val) || 1;
+  current.periods = n;
+  if((current.currentPeriod||1) > n) current.currentPeriod = n;
+  await storeSet('match-'+current.id, current);
+  render();
+}
+async function updateMatchPeriodMinutes(val){
+  current.periodMinutes = parseInt(val) || 1;
+  await storeSet('match-'+current.id, current);
+  render();
+}
+async function updateMatchOpponentName(val){
+  current.opponentName = val.trim() || current.opponentName;
+  await storeSet('match-'+current.id, current);
+  render();
+}
+async function updateMatchOpponentLogo(val){
+  current.opponentLogo = val.trim();
+  await storeSet('match-'+current.id, current);
+  render();
+}
+async function searchLogoForMatch(){
+  const nameEl = document.getElementById('settings-opp-name');
+  const oppName = (nameEl ? nameEl.value.trim() : current.opponentName);
+  if(!oppName){ showToast('Skriv in klubbens namn först'); return; }
+  current.opponentName = oppName;
+  modal.searching = true; render();
+  try{
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers: anthropicHeaders(),
+      body: JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        messages:[{role:'user', content:
+          'Hitta en direkt bild-URL (slutar på .png, .svg, .jpg eller .webp) till fotbollsklubben "'+oppName+'"s officiella klubbmärke/logotyp. '+
+          'Föredra Wikipedia/Wikimedia Commons-länkar eftersom de går att länka direkt till. Svara ENDAST med kompakt JSON på formen '+
+          '{"logoUrl": "https://..."} utan någon inledande text, förklaring eller markdown-formatering. Om du inte hittar någon bild, svara {"logoUrl": null}.'
+        }],
+        tools:[{type:'web_search_20250305', name:'web_search'}]
+      })
+    });
+    if(!resp.ok){ throw new Error('HTTP '+resp.status); }
+    const data = await resp.json();
+    const textBlocks = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text);
+    let logoUrl = null;
+    for(const t of textBlocks){
+      const cleaned = t.replace(/```json|```/g,'').trim();
+      const m = cleaned.match(/\{[\s\S]*\}/);
+      if(m){
+        try{ const parsed = JSON.parse(m[0]); if(parsed.logoUrl){ logoUrl = parsed.logoUrl; break; } }catch(e){}
+      }
+    }
+    if(logoUrl){
+      modal.searching = true; render();
+      const works = await testImageLoads(logoUrl);
+      if(works){
+        current.opponentLogo = logoUrl;
+        await storeSet('match-'+current.id, current);
+        showToast('Emblem hittat');
+      } else {
+        showToast('Hittade en bildlänk men kunde inte ladda den — testa klistra in en annan URL manuellt');
+      }
+    } else {
+      showToast('Hittade ingen bild — klistra in en länk manuellt');
+    }
+  }catch(e){
+    console.error(e);
+    showToast(aiUnavailableMessage());
+  }
+  modal.searching = false; render();
+}
 function currentOnPitch(){
   const set = new Set(current.lineupIds);
   for(const e of current.events){
@@ -1282,6 +1371,7 @@ function renderLive(){
       <button class="back-link" onclick="exitLiveConfirm()">← Hem</button>
       <div class="topbar-right">
         <div style="font-weight:600; color:var(--dim); font-size:14px;">vs ${escapeHtml(current.opponentName)}</div>
+        <button class="icon-btn" style="font-size:18px;" onclick="openMatchSettings()" title="Inställningar">⚙️</button>
         ${themeToggleBtn()}
       </div>
     </div>
@@ -1711,6 +1801,91 @@ function renderModal(){
         <button class="clock-btn" style="width:44px; height:44px; font-size:20px;" onclick="adjustPeriodValue(1)">+</button>
       </div>
       <button class="btn btn-primary btn-block" onclick="confirmPeriodChange()">Spara</button>
+    </div></div>`;
+  }
+  if(modal.kind==='matchSettings'){
+    const tab = modal.tab || 'match';
+    let body = '';
+    if(tab==='match'){
+      const logoBox = modal.searching
+        ? `<div class="logo-preview"><div class="spinner"></div></div>`
+        : current.opponentLogo
+          ? `<div class="logo-preview"><img src="${escapeAttr(current.opponentLogo)}" referrerpolicy="no-referrer" onerror="this.parentElement.innerHTML='🛡️'"></div>`
+          : `<div class="logo-preview">🛡️</div>`;
+      body = `
+        <div class="field" style="margin-bottom:14px;">
+          <label class="field-label">Vårt lagnamn</label>
+          <input type="text" value="${escapeHtml(teamName)}" onchange="updateTeamName(this.value)">
+        </div>
+        <div class="field" style="margin-bottom:14px;">
+          <label class="field-label">Motståndarens klubb</label>
+          <input id="settings-opp-name" type="text" value="${escapeHtml(current.opponentName)}" onchange="updateMatchOpponentName(this.value)">
+        </div>
+        <div class="logo-row">
+          ${logoBox}
+          <button class="btn btn-ghost" style="flex:1;" onclick="searchLogoForMatch()" ${modal.searching?'disabled':''}>🔍 Sök emblem på nätet</button>
+        </div>
+        <div class="field" style="margin-top:10px; margin-bottom:16px;">
+          <label class="field-label">Eller klistra in bild-URL manuellt</label>
+          <input type="url" placeholder="https://..." value="${escapeAttr(current.opponentLogo||'')}" onchange="updateMatchOpponentLogo(this.value)">
+        </div>
+        <div class="section-label">Matchformat</div>
+        <div class="preset-row">
+          <button class="preset-btn ${current.periods===2&&current.periodMinutes===45?'active':''}" onclick="setMatchPreset(2,45)">2 x 45</button>
+          <button class="preset-btn ${current.periods===2&&current.periodMinutes===35?'active':''}" onclick="setMatchPreset(2,35)">2 x 35</button>
+          <button class="preset-btn ${current.periods===2&&current.periodMinutes===25?'active':''}" onclick="setMatchPreset(2,25)">2 x 25</button>
+          <button class="preset-btn ${current.periods===4&&current.periodMinutes===15?'active':''}" onclick="setMatchPreset(4,15)">4 x 15</button>
+        </div>
+        <div class="row-2-even">
+          <div>
+            <label class="field-label">Antal perioder</label>
+            <input type="number" min="1" value="${current.periods||2}" onchange="updateMatchPeriods(this.value)">
+          </div>
+          <div>
+            <label class="field-label">Minuter per period</label>
+            <input type="number" min="1" value="${current.periodMinutes||45}" onchange="updateMatchPeriodMinutes(this.value)">
+          </div>
+        </div>
+      `;
+    } else {
+      const rows = roster.map(p => {
+        if(editingPlayerId === p.id){
+          return `
+          <div class="edit-row">
+            <input id="edit-num-${p.id}" type="number" value="${escapeAttr(p.number)}">
+            <input id="edit-name-${p.id}" type="text" value="${escapeAttr(p.name)}">
+            <button class="icon-btn" style="color:var(--turf);" onclick="saveEditPlayer('${p.id}')">✓</button>
+            <button class="icon-btn danger" onclick="cancelEditPlayer()">✕</button>
+          </div>`;
+        }
+        return `
+        <div class="player-row">
+          <div class="num-badge">${escapeHtml(p.number)}</div>
+          <div class="pname">${escapeHtml(p.name)}</div>
+          <button class="icon-btn" onclick="startEditPlayer('${p.id}')">✎</button>
+          <button class="icon-btn danger" onclick="removePlayer('${p.id}')">✕</button>
+        </div>`;
+      }).join('') || `<div class="empty-hint">Inga spelare tillagda än</div>`;
+      body = `
+        <div class="section-label">Lägg till spelare</div>
+        <div class="row-2" style="margin-bottom:10px;">
+          <input id="new-num" type="number" placeholder="Nr">
+          <input id="new-name" type="text" placeholder="Namn">
+        </div>
+        <button class="btn btn-primary btn-block" style="margin-bottom:16px;" onclick="addPlayer()">+ Lägg till</button>
+        <div class="section-label">Spelare (${roster.length})</div>
+        ${rows}
+        <div class="modal-sub" style="margin-top:10px;">Ändringar här gäller hela truppen, även i kommande matcher.</div>
+      `;
+    }
+    return `<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="modal-sheet">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-title">⚙️ Inställningar</div>
+      <div class="preset-row" style="margin:10px 0 16px;">
+        <button class="preset-btn ${tab==='match'?'active':''}" onclick="setSettingsTab('match')">🏟️ Match</button>
+        <button class="preset-btn ${tab==='roster'?'active':''}" onclick="setSettingsTab('roster')">📋 Trupp</button>
+      </div>
+      ${body}
     </div></div>`;
   }
   if(modal.kind==='note'){
